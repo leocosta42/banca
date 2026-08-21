@@ -37,8 +37,8 @@ export async function GET(request) {
     // Algoritmo de Triagem de Dados (Pipeline)
     const opportunities = [];
     
-    // Varre os jogos recebidos
-    if(apiData.response) {
+    // Varre os jogos recebidos de forma segura
+    if(apiData && Array.isArray(apiData.response) && apiData.response.length > 0) {
         // Ordena por horário do jogo
         const sortedMatches = apiData.response.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
         
