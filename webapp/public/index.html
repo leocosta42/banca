@@ -39,6 +39,13 @@
         <button onclick="dismissTilt()" class="tilt-dismiss">✕</button>
     </div>
 
+    <!-- Navigation Tabs -->
+    <nav class="app-nav">
+        <button class="nav-tab active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="nav-tab" id="tab-btn-radar" onclick="switchTab('radar')">📡 Radar O0.5 HT</button>
+    </nav>
+
+    <div id="view-dashboard">
     <!-- KPI Cards -->
     <section class="kpi-grid">
         <div class="kpi-card kpi-bankroll">
@@ -245,6 +252,36 @@
             </table>
         </div>
     </section>
+    </div> <!-- Fim do view-dashboard -->
+
+    <div id="view-radar" style="display:none;">
+        <section class="card">
+            <div class="history-header">
+                <h2 class="card-title">📡 Radar de Oportunidades: Over 0.5 HT</h2>
+                <div class="history-filters">
+                    <button class="btn-export" onclick="loadRadarData()">🔄 Atualizar Dados</button>
+                </div>
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Filtro IA: Ligas ofensivas, times com alta taxa no 1º tempo (>75%) e expectativa de xG > 0.60 no HT.</p>
+            <div class="table-wrapper">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Liga / País</th>
+                            <th>Confronto & Hora</th>
+                            <th>Histórico O0.5 HT</th>
+                            <th>Justificativa Tática</th>
+                            <th>Confiança</th>
+                            <th>Sugestão</th>
+                        </tr>
+                    </thead>
+                    <tbody id="radar-body">
+                        <tr><td colspan="6" class="empty-state">Carregando oportunidades...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 
     <!-- Config Modal -->
     <div class="modal-overlay" id="config-modal" style="display:none;" onclick="closeConfigModal(event)">

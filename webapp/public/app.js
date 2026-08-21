@@ -421,3 +421,43 @@ window.addEventListener('message', async (event) => {
         }
     }
 });
+
+// ============ TABS & RADAR ============
+function switchTab(tabName) {
+    document.getElementById('view-dashboard').style.display = tabName === 'dashboard' ? 'block' : 'none';
+    document.getElementById('view-radar').style.display = tabName === 'radar' ? 'block' : 'none';
+    
+    document.getElementById('tab-btn-dashboard').className = tabName === 'dashboard' ? 'nav-tab active' : 'nav-tab';
+    document.getElementById('tab-btn-radar').className = tabName === 'radar' ? 'nav-tab active' : 'nav-tab';
+
+    if (tabName === 'radar') {
+        loadRadarData();
+    }
+}
+
+function loadRadarData() {
+    const radarBody = document.getElementById('radar-body');
+    radarBody.innerHTML = '<tr><td colspan="6" class="empty-state">Atualizando algoritmos via IA...</td></tr>';
+    
+    // Simulação de Fetch de uma API Externa (Data Pipeline)
+    setTimeout(() => {
+        const mockData = [
+            { liga: "🇩🇪 DFB-Pokal", jogo: "St. Tönis x Frankfurt (13:00)", hist: "92%", just: "Frankfurt projeta 1.15 xG no 1ºT.", conf: "Muito Alto", sug: "Pré-Jogo (Asiático)" },
+            { liga: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier", jogo: "Arsenal x Coventry (16:00)", hist: "85%", just: "Blitz inicial absurda do Arsenal.", conf: "Muito Alto", sug: "Live > 10 min" },
+            { liga: "🇹🇷 Super Lig", jogo: "Erzurumspor x Galatasaray (15:30)", hist: "81%", just: "Galatasaray marca/sofre no HT.", conf: "Alto", sug: "Live > 15 min" },
+            { liga: "🇫🇷 Ligue 1", jogo: "Marseille x Strasbourg (15:45)", hist: "79%", just: "Jogos abertos antes dos 35'.", conf: "Alto", sug: "Live > 20 min" },
+            { liga: "🇸🇦 Pro League", jogo: "Al Qadsiah x Al Ittihad (15:00)", hist: "77%", just: "Ittihad agressivo, defesa exposta.", conf: "Alto", sug: "Pré-Jogo" }
+        ];
+
+        radarBody.innerHTML = mockData.map(d => `
+            <tr>
+                <td>${d.liga}</td>
+                <td><strong>${d.jogo}</strong></td>
+                <td><span class="badge badge-win">${d.hist}</span></td>
+                <td style="font-size: 0.85rem;">${d.just}</td>
+                <td><span class="result-badge green">${d.conf}</span></td>
+                <td>${d.sug}</td>
+            </tr>
+        `).join('');
+    }, 1200);
+}
