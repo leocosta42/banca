@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Craque da Banca Sync",
+  "version": "1.0",
+  "description": "Sincroniza apostas esportivas com o painel Craque da Banca",
+  "permissions": ["activeTab", "scripting", "tabs"],
+  "host_permissions": [
+    "https://*.bet365.com/*",
+    "http://localhost:8080/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Sincronizar Apostas"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:8080/*"],
+      "js": ["dashboard-connector.js"]
+    }
+  ]
+}

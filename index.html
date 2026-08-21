@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craque da Banca — Gestão de Apostas</title>
+    <meta name="description" content="Painel profissional de gestão de banca para apostas esportivas ao vivo">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">⚽</div>
+            <div>
+                <h1 class="header-title">Craque da Banca</h1>
+                <p class="header-subtitle">Gestão Profissional de Apostas</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="daily-limits">
+                <button class="btn-config" onclick="openConfigModal()" title="Configurar limites">⚙️ Limites</button>
+                <div class="limit-badges">
+                    <span class="badge badge-loss" id="badge-stop-loss">SL: —</span>
+                    <span class="badge badge-win" id="badge-stop-win">SW: —</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tilt Alert Banner -->
+    <div class="tilt-alert" id="tilt-alert" style="display:none;">
+        <span>🔴</span>
+        <strong>ALERTA DE TILT!</strong>
+        <span id="tilt-message">Você está numa sequência negativa. Considere parar por hoje.</span>
+        <button onclick="dismissTilt()" class="tilt-dismiss">✕</button>
+    </div>
+
+    <!-- KPI Cards -->
+    <section class="kpi-grid">
+        <div class="kpi-card kpi-bankroll">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-info">
+                <span class="kpi-label">Banca Atual</span>
+                <span class="kpi-value" id="kpi-bankroll">R$ 200,00</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-profit">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-info">
+                <span class="kpi-label">Lucro / Prejuízo</span>
+                <span class="kpi-value" id="kpi-profit">R$ 0,00</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-roi">
+            <div class="kpi-icon">🎯</div>
+            <div class="kpi-info">
+                <span class="kpi-label">ROI</span>
+                <span class="kpi-value" id="kpi-roi">0,0%</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-winrate">
+            <div class="kpi-icon">🏆</div>
+            <div class="kpi-info">
+                <span class="kpi-label">Win Rate</span>
+                <span class="kpi-value" id="kpi-winrate">0,0%</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-streak">
+            <div class="kpi-icon">🔥</div>
+            <div class="kpi-info">
+                <span class="kpi-label">Sequência Atual</span>
+                <span class="kpi-value" id="kpi-streak">—</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-today">
+            <div class="kpi-icon">📅</div>
+            <div class="kpi-info">
+                <span class="kpi-label">Resultado Hoje</span>
+                <span class="kpi-value" id="kpi-today">R$ 0,00</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-grid">
+        <!-- Left Column: Calculator + New Bet -->
+        <div class="left-column">
+            <!-- Stake Calculator -->
+            <section class="card card-calculator">
+                <h2 class="card-title">🧮 Calculadora de Stake</h2>
+                <div class="calc-form">
+                    <div class="form-group">
+                        <label>Odd da Aposta</label>
+                        <input type="number" id="calc-odd" step="0.01" min="1.01" placeholder="Ex: 1.85" oninput="calculateStake()">
+                    </div>
+                    <div class="form-group">
+                        <label>Probabilidade Real (%)</label>
+                        <input type="number" id="calc-prob" step="1" min="1" max="99" placeholder="Sua estimativa (ex: 60)" oninput="calculateStake()">
+                    </div>
+                    <div class="calc-results" id="calc-results" style="display:none;">
+                        <div class="calc-result">
+                            <span class="calc-method">Kelly ¼ (Seguro)</span>
+                            <span class="calc-value" id="calc-kelly25">—</span>
+                        </div>
+                        <div class="calc-result">
+                            <span class="calc-method">Kelly ½ (Moderado)</span>
+                            <span class="calc-value" id="calc-kelly50">—</span>
+                        </div>
+                        <div class="calc-result">
+                            <span class="calc-method">Flat 2%</span>
+                            <span class="calc-value" id="calc-flat2">—</span>
+                        </div>
+                        <div class="calc-result">
+                            <span class="calc-method">Flat 3%</span>
+                            <span class="calc-value" id="calc-flat3">—</span>
+                        </div>
+                        <div class="calc-edge">
+                            <span>Edge (Vantagem):</span>
+                            <span id="calc-edge-value">—</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Register Bet -->
+            <section class="card card-newbet">
+                <h2 class="card-title">⚡ Registrar Aposta</h2>
+                <form id="bet-form" onsubmit="return registerBet(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Evento / Partida</label>
+                            <input type="text" id="bet-event" placeholder="Ex: Flamengo x Palmeiras" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mercado</label>
+                            <select id="bet-market" required>
+                                <option value="">Selecione...</option>
+                                <option value="Over 0.5 HT">Over 0.5 HT</option>
+                                <option value="Over 1.5 FT">Over 1.5 FT</option>
+                                <option value="Over 2.5 FT">Over 2.5 FT</option>
+                                <option value="BTTS">Ambas Marcam</option>
+                                <option value="ML Home">ML Casa</option>
+                                <option value="ML Away">ML Fora</option>
+                                <option value="Draw">Empate</option>
+                                <option value="Cantos">Cantos</option>
+                                <option value="Cartões">Cartões</option>
+                                <option value="Handicap">Handicap</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Odd</label>
+                            <input type="number" id="bet-odd" step="0.01" min="1.01" placeholder="1.85" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Valor Apostado (R$)</label>
+                            <input type="number" id="bet-stake" step="0.01" min="0.01" placeholder="10.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Resultado</label>
+                            <div class="result-buttons">
+                                <input type="radio" name="bet-result" id="result-green" value="green" required>
+                                <label for="result-green" class="btn-result btn-green">✅ Green</label>
+                                <input type="radio" name="bet-result" id="result-red" value="red">
+                                <label for="result-red" class="btn-result btn-red">❌ Red</label>
+                                <input type="radio" name="bet-result" id="result-cashout" value="cashout">
+                                <label for="result-cashout" class="btn-result btn-cashout">💵 Cashout</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row cashout-row" id="cashout-row" style="display:none;">
+                        <div class="form-group">
+                            <label>Valor do Cashout (R$)</label>
+                            <input type="number" id="bet-cashout-value" step="0.01" min="0" placeholder="Valor recebido">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit">Registrar Aposta</button>
+                </form>
+            </section>
+        </div>
+
+        <!-- Right Column: Chart + History -->
+        <div class="right-column">
+            <!-- Chart -->
+            <section class="card card-chart">
+                <h2 class="card-title">📈 Evolução da Banca</h2>
+                <div class="chart-container">
+                    <canvas id="bankroll-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- Market Performance -->
+            <section class="card card-markets">
+                <h2 class="card-title">📊 Performance por Mercado</h2>
+                <div id="market-stats" class="market-stats">
+                    <p class="empty-state">Registre apostas para ver sua performance por mercado.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Bet History -->
+    <section class="card card-history">
+        <div class="history-header">
+            <h2 class="card-title">📋 Histórico de Apostas</h2>
+            <div class="history-filters">
+                <select id="filter-market" onchange="renderHistory()">
+                    <option value="all">Todos os mercados</option>
+                </select>
+                <select id="filter-result" onchange="renderHistory()">
+                    <option value="all">Todos os resultados</option>
+                    <option value="green">✅ Green</option>
+                    <option value="red">❌ Red</option>
+                    <option value="cashout">💵 Cashout</option>
+                </select>
+                <button class="btn-export" onclick="exportCSV()">📥 Exportar CSV</button>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Evento</th>
+                        <th>Mercado</th>
+                        <th>Odd</th>
+                        <th>Stake</th>
+                        <th>Resultado</th>
+                        <th>P&L</th>
+                        <th>Banca</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="9" class="empty-state">Nenhuma aposta registrada ainda.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Config Modal -->
+    <div class="modal-overlay" id="config-modal" style="display:none;" onclick="closeConfigModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2>⚙️ Configurações</h2>
+            <div class="form-group">
+                <label>Banca Inicial (R$)</label>
+                <input type="number" id="config-initial-bankroll" step="0.01" min="1" value="200">
+            </div>
+            <div class="form-group">
+                <label>Stop Loss Diário (R$)</label>
+                <input type="number" id="config-stop-loss" step="0.01" min="0" placeholder="Ex: 40 (20% da banca)">
+            </div>
+            <div class="form-group">
+                <label>Stop Win Diário (R$)</label>
+                <input type="number" id="config-stop-win" step="0.01" min="0" placeholder="Ex: 30">
+            </div>
+            <div class="form-group">
+                <label>Alerta de Tilt após quantas reds seguidas?</label>
+                <input type="number" id="config-tilt-threshold" min="1" value="3">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-submit" onclick="saveConfig()">Salvar</button>
+                <button class="btn-cancel" onclick="closeConfigModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal" style="display:none;" onclick="closeDeleteModal(event)">
+        <div class="modal modal-small" onclick="event.stopPropagation()">
+            <h2>🗑️ Excluir Aposta?</h2>
+            <p>Essa ação não pode ser desfeita. A banca será recalculada.</p>
+            <div class="modal-actions">
+                <button class="btn-delete" id="btn-confirm-delete">Excluir</button>
+                <button class="btn-cancel" onclick="closeDeleteModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
