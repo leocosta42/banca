@@ -6,7 +6,8 @@
   "permissions": ["activeTab", "scripting", "tabs"],
   "host_permissions": [
     "https://*.bet365.com/*",
-    "http://localhost:8080/*"
+    "http://localhost:3000/*",
+    "https://banca-alpha.vercel.app/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -14,7 +15,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://localhost:8080/*"],
+      "matches": ["http://localhost:3000/*", "https://banca-alpha.vercel.app/*"],
       "js": ["dashboard-connector.js"]
     }
   ]

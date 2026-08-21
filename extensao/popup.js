@@ -58,11 +58,18 @@ document.getElementById('btn-sync').addEventListener('click', async () => {
     status.innerText = "Procurando painel Craque da Banca...";
 
     try {
-        // Encontra a aba onde o painel (localhost:8080) está aberto
-        const tabs = await chrome.tabs.query({ url: "http://localhost:8080/*" });
+        // Encontra a aba onde o painel está aberto (local ou vercel)
+        const tabs = await chrome.tabs.query({ url: "*://banca-alpha.vercel.app/*" });
+        if (tabs.length === 0) {
+            // Tenta ver se está no localhost
+            const localTabs = await chrome.tabs.query({ url: "http://localhost:3000/*" });
+            if (localTabs.length > 0) {
+                tabs.push(...localTabs);
+            }
+        }
         
         if (tabs.length === 0) {
-            status.innerText = "Erro: Abra o painel no localhost:8080 primeiro!";
+            status.innerText = "Erro: Abra o painel (banca-alpha.vercel.app) primeiro!";
             return;
         }
 
