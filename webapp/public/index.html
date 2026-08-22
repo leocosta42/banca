@@ -43,6 +43,7 @@
     <nav class="app-nav">
         <button class="nav-tab active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
         <button class="nav-tab" id="tab-btn-radar" onclick="switchTab('radar')">📡 Radar O0.5 HT</button>
+        <button class="nav-tab" id="tab-btn-report" onclick="switchTab('report')">📈 Relatório O0.5 HT</button>
     </nav>
 
     <div id="view-dashboard">
@@ -145,6 +146,10 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label>Liga / Competição</label>
+                            <input type="text" id="bet-league" placeholder="Ex: Série A">
+                        </div>
+                        <div class="form-group">
                             <label>Mercado</label>
                             <select id="bet-market" required>
                                 <option value="">Selecione...</option>
@@ -187,6 +192,13 @@
                         <div class="form-group">
                             <label>Valor do Cashout (R$)</label>
                             <input type="number" id="bet-cashout-value" step="0.01" min="0" placeholder="Valor recebido">
+                        </div>
+                    </div>
+                    <div class="form-row goal-minute-row" id="goal-minute-row" style="display:none;">
+                        <div class="form-group">
+                            <label>Minuto do Gol (0-45)</label>
+                            <input type="number" id="bet-goal-minute" min="0" max="45" placeholder="Ex: 12">
+                            <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px;">Crucial para o Relatório O0.5 HT</small>
                         </div>
                     </div>
                     <button type="submit" class="btn-submit">Registrar Aposta</button>
@@ -278,6 +290,59 @@
                         <tr><td colspan="5" class="empty-state">Carregando oportunidades...</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Novo Dashboard Over 0.5 HT (Sugestão do Claude) -->
+    <div id="view-report" style="display:none;">
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-label">Total Over 0.5 HT</span>
+                <span class="kpi-value" id="rep-total">0</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Win Rate</span>
+                <span class="kpi-value positive" id="rep-winrate">0%</span>
+                <span class="kpi-meta" id="rep-winrate-meta">0 Greens / 0 Reds</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">ROI Over 0.5 HT</span>
+                <span class="kpi-value positive" id="rep-roi">0%</span>
+                <span class="kpi-meta" id="rep-roi-meta">R$ 0,00</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-label">Odd Média</span>
+                <span class="kpi-value" id="rep-odd">0.00</span>
+            </div>
+        </section>
+
+        <section class="main-grid">
+            <div class="left-column">
+                <section class="card">
+                    <h2 class="card-title">⏱️ Minuto do Gol (Greens)</h2>
+                    <div class="chart-container" style="position: relative; height: 300px;">
+                        <canvas id="minuteChart"></canvas>
+                    </div>
+                </section>
+            </div>
+            <div class="right-column">
+                <section class="card">
+                    <h2 class="card-title">🏆 Melhor Liga (Over 0.5 HT)</h2>
+                    <table class="history-table" style="margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Liga</th>
+                                <th>Apostas</th>
+                                <th>Win Rate</th>
+                                <th>Lucro</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rep-league-body">
+                            <tr><td colspan="4" class="empty-state">Sem dados suficientes</td></tr>
+                        </tbody>
+                    </table>
+                </section>
             </div>
         </section>
     </div>

@@ -146,11 +146,13 @@ async function registerBet(e) {
     const bet = {
         date: new Date().toISOString(),
         event: document.getElementById('bet-event').value.trim(),
+        league: document.getElementById('bet-league').value.trim() || 'Desconhecida',
         market: document.getElementById('bet-market').value,
         odd: parseFloat(document.getElementById('bet-odd').value),
         stake: parseFloat(document.getElementById('bet-stake').value),
         result: result.value,
         cashoutValue: result.value === 'cashout' ? (parseFloat(document.getElementById('bet-cashout-value').value) || 0) : 0,
+        goalMinute: result.value === 'green' ? (parseInt(document.getElementById('bet-goal-minute').value) || null) : null,
         pl: 0
     };
     bet.pl = calculatePL(bet);
@@ -164,6 +166,7 @@ async function registerBet(e) {
 
     document.getElementById('bet-form').reset();
     document.getElementById('cashout-row').style.display = 'none';
+    document.getElementById('goal-minute-row').style.display = 'none';
     checkTilt();
 
     // Salva no Banco de Dados
@@ -189,7 +192,15 @@ async function registerBet(e) {
 document.querySelectorAll('input[name="bet-result"]').forEach(radio => {
     radio.addEventListener('change', () => {
         document.getElementById('cashout-row').style.display = document.getElementById('result-cashout').checked ? 'grid' : 'none';
+        
+        // Só exibe minuto do gol se for mercado Over HT e for green (ou deixar genérico para qualquer green para o relatório filtrar depois)
+        const isHT = document.getElementById('bet-market').value === 'Over 0.5 HT';
+        document.getElementById('goal-minute-row').style.display = (document.getElementById('result-green').checked && isHT) ? 'grid' : 'none';
     });
+});
+document.getElementById('bet-market').addEventListener('change', () => {
+    const isHT = document.getElementById('bet-market').value === 'Over 0.5 HT';
+    document.getElementById('goal-minute-row').style.display = (document.getElementById('result-green').checked && isHT) ? 'grid' : 'none';
 });
 
 // ============ DELETE BET (API UPDATE) ============
@@ -426,12 +437,16 @@ window.addEventListener('message', async (event) => {
 function switchTab(tabName) {
     document.getElementById('view-dashboard').style.display = tabName === 'dashboard' ? 'block' : 'none';
     document.getElementById('view-radar').style.display = tabName === 'radar' ? 'block' : 'none';
+    document.getElementById('view-report').style.display = tabName === 'report' ? 'block' : 'none';
     
     document.getElementById('tab-btn-dashboard').className = tabName === 'dashboard' ? 'nav-tab active' : 'nav-tab';
     document.getElementById('tab-btn-radar').className = tabName === 'radar' ? 'nav-tab active' : 'nav-tab';
+    document.getElementById('tab-btn-report').className = tabName === 'report' ? 'nav-tab active' : 'nav-tab';
 
     if (tabName === 'radar') {
         loadRadarData();
+    } else if (tabName === 'report') {
+        renderReportOver05HT();
     }
 }
 
@@ -498,4 +513,104 @@ async function loadRadarData() {
         console.error("Erro ao carregar o radar:", err);
         radarBody.innerHTML = '<tr><td colspan="5" class="empty-state">Erro ao conectar com a API de dados.</td></tr>';
     }
+}
+
+// ============ REPORT OVER 0.5 HT (Claude) ============
+let reportMinuteChart = null;
+
+function renderReportOver05HT() {
+    const htBets = state.bets.filter(b => b.market === 'Over 0.5 HT');
+    
+    // KPIs
+    const total = htBets.length;
+    const wins = htBets.filter(b => b.result === 'green').length;
+    const reds = htBets.filter(b => b.result === 'red').length;
+    const winRate = total > 0 ? (wins / (wins+reds)) * 100 : 0;
+    
+    let staked = 0, pl = 0, oddSum = 0;
+    htBets.forEach(b => { staked += b.stake; pl += b.pl; oddSum += b.odd; });
+    const roi = staked > 0 ? (pl / staked) * 100 : 0;
+    const avgOdd = total > 0 ? (oddSum / total) : 0;
+
+    document.getElementById('rep-total').textContent = total;
+    
+    const wrEl = document.getElementById('rep-winrate');
+    wrEl.textContent = formatPercent(winRate);
+    wrEl.className = winRate >= 50 ? 'kpi-value positive' : 'kpi-value negative';
+    document.getElementById('rep-winrate-meta').textContent = `${wins} Greens / ${reds} Reds`;
+
+    const roiEl = document.getElementById('rep-roi');
+    roiEl.textContent = formatPercent(roi);
+    roiEl.className = pl >= 0 ? 'kpi-value positive' : 'kpi-value negative';
+    document.getElementById('rep-roi-meta').textContent = formatBRL(pl);
+
+    document.getElementById('rep-odd').textContent = avgOdd.toFixed(2);
+
+    // League Table
+    const leagueMap = {};
+    htBets.forEach(b => {
+        const l = b.league || 'Desconhecida';
+        if(!leagueMap[l]) leagueMap[l] = { total: 0, wins: 0, pl: 0 };
+        leagueMap[l].total++;
+        if(b.result === 'green') leagueMap[l].wins++;
+        leagueMap[l].pl += b.pl;
+    });
+
+    const lBody = document.getElementById('rep-league-body');
+    const sortedLeagues = Object.entries(leagueMap).sort((a,b) => b[1].pl - a[1].pl);
+    
+    if(sortedLeagues.length > 0) {
+        lBody.innerHTML = sortedLeagues.map(([name, d]) => {
+            const lWr = d.total > 0 ? (d.wins / d.total) * 100 : 0;
+            return `<tr>
+                <td style="font-weight:600">${name}</td>
+                <td>${d.total}</td>
+                <td>${formatPercent(lWr)}</td>
+                <td class="${d.pl >= 0 ? 'pl-positive' : 'pl-negative'}">${d.pl >= 0 ? '+' : ''}${formatBRL(d.pl)}</td>
+            </tr>`;
+        }).join('');
+    } else {
+        lBody.innerHTML = '<tr><td colspan="4" class="empty-state">Sem dados suficientes</td></tr>';
+    }
+
+    // Chart
+    const intervals = {'0-5':0,'5-10':0,'10-15':0,'15-20':0,'20-25':0,'25-30':0,'30-35':0,'35-40':0,'40-45':0};
+    const greens = htBets.filter(b => b.result === 'green' && b.goalMinute !== null);
+    greens.forEach(b => {
+        const m = b.goalMinute;
+        if(m <= 5) intervals['0-5']++;
+        else if(m <= 10) intervals['5-10']++;
+        else if(m <= 15) intervals['10-15']++;
+        else if(m <= 20) intervals['15-20']++;
+        else if(m <= 25) intervals['20-25']++;
+        else if(m <= 30) intervals['25-30']++;
+        else if(m <= 35) intervals['30-35']++;
+        else if(m <= 40) intervals['35-40']++;
+        else intervals['40-45']++;
+    });
+
+    const ctx = document.getElementById('minuteChart');
+    if(reportMinuteChart) reportMinuteChart.destroy();
+    
+    reportMinuteChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(intervals),
+            datasets: [{
+                label: 'Gols Marcados',
+                data: Object.values(intervals),
+                backgroundColor: '#10b981',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+            }
+        }
+    });
 }
