@@ -437,7 +437,7 @@ function switchTab(tabName) {
 
 async function loadRadarData() {
     const radarBody = document.getElementById('radar-body');
-    radarBody.innerHTML = '<tr><td colspan="6" class="empty-state">Buscando dados na API do Radar...</td></tr>';
+    radarBody.innerHTML = '<tr><td colspan="5" class="empty-state">Buscando dados na API do Radar...</td></tr>';
     
     try {
         const response = await fetch('/api/radar');
@@ -445,20 +445,42 @@ async function loadRadarData() {
 
         if (json.success && json.data.length > 0) {
             radarBody.innerHTML = json.data.map(d => `
-                <tr>
-                    <td>${d.liga}</td>
-                    <td><strong>${d.jogo}</strong></td>
-                    <td><span class="badge badge-win">${d.hist}</span></td>
-                    <td style="font-size: 0.85rem;">${d.just}</td>
-                    <td><span class="result-badge green">${d.conf}</span></td>
-                    <td>${d.sug}</td>
+                <tr class="${d.isLive ? 'live-row' : ''}">
+                    <td>
+                        <div class="radar-league">
+                            <img src="${d.ligaLogo}" onerror="this.style.display='none'">
+                            <span>${d.liga}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="radar-match">
+                            <div class="radar-team">
+                                <span>${d.home}</span>
+                                <img src="${d.homeLogo}" onerror="this.style.display='none'">
+                            </div>
+                            <div class="radar-score ${d.isLive ? 'live' : ''}">
+                                ${d.isLive ? `<span>${d.score}</span><small class="live-blink">${d.status}</small>` : `<span>${d.time}</span>`}
+                            </div>
+                            <div class="radar-team radar-away">
+                                <img src="${d.awayLogo}" onerror="this.style.display='none'">
+                                <span>${d.away}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="radar-stat">
+                            <span style="color: var(--win-color); font-weight: 700;">${d.hist}</span>
+                        </div>
+                    </td>
+                    <td><span class="result-badge ${d.conf === 'Muito Alto' ? 'green' : 'blue'}">${d.conf}</span></td>
+                    <td><span class="radar-sug ${d.sug.includes('Live') ? 'sug-live' : 'sug-pre'}">${d.sug}</span></td>
                 </tr>
             `).join('');
         } else {
-            radarBody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhuma oportunidade encontrada para hoje.</td></tr>';
+            radarBody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma oportunidade encontrada para hoje.</td></tr>';
         }
     } catch(err) {
         console.error("Erro ao carregar o radar:", err);
-        radarBody.innerHTML = '<tr><td colspan="6" class="empty-state">Erro ao conectar com a API de dados.</td></tr>';
+        radarBody.innerHTML = '<tr><td colspan="5" class="empty-state">Erro ao conectar com a API de dados.</td></tr>';
     }
 }

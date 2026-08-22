@@ -49,24 +49,42 @@ export async function GET(request) {
 
             const home = match.teams.home.name;
             const away = match.teams.away.name;
-            const time = new Date(match.fixture.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            
+            // Horário de Brasília forçado no servidor (para evitar fuso horário de UTC da Vercel)
+            const time = new Date(match.fixture.date).toLocaleTimeString('pt-BR', {
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'America/Sao_Paulo'
+            });
+            
+            // Dados Ao Vivo / Design Premium
+            const isLive = ['1H', '2H', 'HT'].includes(status);
+            const elapsed = match.fixture.status.elapsed;
+            const goalsHome = match.goals.home ?? 0;
+            const goalsAway = match.goals.away ?? 0;
+            const score = isLive ? `${goalsHome} - ${goalsAway}` : time;
             
             // Aqui estamos simulando a inteligência da % de O0.5 HT para cada jogo real
-            // Numa aplicação premium, você faria uma chamada extra para `/fixtures/statistics`
             const fakeOverHT = Math.floor(Math.random() * (95 - 65) + 65); 
             
             let confidence = "Médio";
-            let suggestion = "Live";
-            let badgeClass = "badge-loss";
+            let suggestion = "Live (Aguardar Pressão)";
             
-            if(fakeOverHT >= 80) { confidence = "Muito Alto"; suggestion = "Pré-Jogo"; badgeClass = "badge-win"; }
-            else if(fakeOverHT >= 70) { confidence = "Alto"; suggestion = "Live > 15'"; badgeClass = "badge-win"; }
+            if(fakeOverHT >= 80) { confidence = "Muito Alto"; suggestion = "Pré-Jogo ou Live > 10'"; }
+            else if(fakeOverHT >= 70) { confidence = "Alto"; suggestion = "Live > 15'"; }
 
             opportunities.push({
                 liga: match.league.name,
-                jogo: `${home} x ${away} (${time})`,
+                ligaLogo: match.league.logo,
+                home: home,
+                homeLogo: match.teams.home.logo,
+                away: away,
+                awayLogo: match.teams.away.logo,
+                time: time,
+                isLive: isLive,
+                score: score,
+                status: isLive && elapsed ? `${elapsed}'` : 'NS',
                 hist: `${fakeOverHT}%`,
-                just: `Partida oficial: Análise estatística indica tendência de gols.`,
                 conf: confidence,
                 sug: suggestion
             });
