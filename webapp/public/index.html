@@ -41,12 +41,47 @@
 
     <!-- Navigation Tabs -->
     <nav class="app-nav">
-        <button class="nav-tab active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
-        <button class="nav-tab" id="tab-btn-radar" onclick="switchTab('radar')">📡 Radar O0.5 HT</button>
-        <button class="nav-tab" id="tab-btn-report" onclick="switchTab('report')">📈 Relatório O0.5 HT</button>
+        <button class="nav-tab active" id="tab-btn-scanner" onclick="switchTab('scanner')">🤖 Robô de Sinais (Scanner)</button>
+        <button class="nav-tab" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 Gestão de Banca</button>
+        <button class="nav-tab" id="tab-btn-radar" onclick="switchTab('radar')">📡 Radar Ao Vivo</button>
+        <button class="nav-tab" id="tab-btn-report" onclick="switchTab('report')">📈 Relatório HT</button>
     </nav>
 
-    <div id="view-dashboard">
+    <!-- NOVO SCANNER PRÉ-JOGO (ROBÔ) -->
+    <div id="view-scanner" style="display:block;">
+        <section class="card">
+            <div class="history-header" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                <h2 class="card-title" style="font-size: 1.5rem;">🚨 Jogos Mastigados: Oportunidades do Dia</h2>
+                <p style="color: var(--text-muted);">
+                    O Robô analisou todos os jogos de hoje. Foco total nas partidas abaixo (Chance matemática real > 70% para Golo no 1º Tempo baseada em xG Pré-Live).
+                </p>
+            </div>
+            
+            <div class="scanner-actions" style="margin-bottom: 20px;">
+                <button class="btn-submit" onclick="loadScannerData()" style="width: auto;">🔍 Buscar Oportunidades Agora</button>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>🏆 Liga</th>
+                            <th>⏰ Horário</th>
+                            <th>⚽ Confronto (Mandante x Visitante)</th>
+                            <th>🔥 Chance de Gol HT</th>
+                            <th>📊 xG Esperado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scanner-body">
+                        <tr><td colspan="5" class="empty-state">Clique em buscar para ver os jogos filtrados do dia.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- O RESTO FICA OCULTO POR PADRÃO -->
+    <div id="view-dashboard" style="display:none;">
     <!-- KPI Cards -->
     <section class="kpi-grid">
         <div class="kpi-card kpi-bankroll">

@@ -433,12 +433,13 @@ window.addEventListener('message', async (event) => {
     }
 });
 
-// ============ TABS & RADAR ============
 function switchTab(tabName) {
+    document.getElementById('view-scanner').style.display = tabName === 'scanner' ? 'block' : 'none';
     document.getElementById('view-dashboard').style.display = tabName === 'dashboard' ? 'block' : 'none';
     document.getElementById('view-radar').style.display = tabName === 'radar' ? 'block' : 'none';
     document.getElementById('view-report').style.display = tabName === 'report' ? 'block' : 'none';
     
+    document.getElementById('tab-btn-scanner').className = tabName === 'scanner' ? 'nav-tab active' : 'nav-tab';
     document.getElementById('tab-btn-dashboard').className = tabName === 'dashboard' ? 'nav-tab active' : 'nav-tab';
     document.getElementById('tab-btn-radar').className = tabName === 'radar' ? 'nav-tab active' : 'nav-tab';
     document.getElementById('tab-btn-report').className = tabName === 'report' ? 'nav-tab active' : 'nav-tab';
@@ -447,6 +448,51 @@ function switchTab(tabName) {
         loadRadarData();
     } else if (tabName === 'report') {
         renderReportOver05HT();
+    } else if (tabName === 'scanner') {
+        loadScannerData();
+    }
+}
+
+// ============ SCANNER PRÉ-JOGO ============
+async function loadScannerData() {
+    const tbody = document.getElementById('scanner-body');
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">O Robô está garimpando os jogos. Aguarde (Pode levar uns 10 segundos)...</td></tr>';
+    
+    try {
+        const res = await fetch('/api/scanner');
+        const json = await res.json();
+        
+        if (!json.success) {
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Erro: ${json.error}. Configure a variável FOOTYSTATS_API_KEY na Vercel.</td></tr>`;
+            return;
+        }
+
+        if (json.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Hoje não há jogos que atendam aos requisitos de >70% de chance para Over HT. Proteja sua banca!</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = json.data.map(m => {
+            const timeStr = new Date(m.time * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            return `<tr>
+                <td>${m.league}</td>
+                <td><span style="background: var(--primary); padding: 4px 8px; border-radius: 4px; font-weight: bold;">${timeStr}</span></td>
+                <td style="font-weight: bold;">${m.home} <span style="color:var(--text-muted)">vs</span> ${m.away}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color: ${m.ht_chance >= 75 ? 'var(--green)' : '#fbbf24'}; font-weight: 800;">${m.ht_chance}%</span>
+                        <div class="market-bar" style="width: 100px; flex-shrink: 0;"><div class="market-bar-fill" style="width:${m.ht_chance}%;background:${m.ht_chance >= 75 ? 'var(--green)' : '#fbbf24'}"></div></div>
+                    </div>
+                </td>
+                <td>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Casa: ${m.xg_home} | Fora: ${m.xg_away}</span>
+                </td>
+            </tr>`;
+        }).join('');
+
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Erro ao comunicar com a API do Robô.</td></tr>';
     }
 }
 
