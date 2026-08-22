@@ -64,14 +64,32 @@ export async function GET(request) {
             const goalsAway = match.goals.away ?? 0;
             const score = isLive ? `${goalsHome} - ${goalsAway}` : time;
             
-            // Aqui estamos simulando a inteligência da % de O0.5 HT para cada jogo real
+            // Simulação de Dados de Especialista (Expert Mode)
             const fakeOverHT = Math.floor(Math.random() * (95 - 65) + 65); 
+            const xG = (Math.random() * (2.8 - 0.8) + 0.8).toFixed(2); // Expected Goals
             
-            let confidence = "Médio";
-            let suggestion = "Live (Aguardar Pressão)";
+            // Simula Odd de Mercado (valoriza de acordo com o tempo do jogo se estiver rolando)
+            const baseOdd = (Math.random() * (1.45 - 1.25) + 1.25);
+            const liveOdd = isLive && elapsed ? (baseOdd + (elapsed * 0.015)).toFixed(2) : baseOdd.toFixed(2);
             
-            if(fakeOverHT >= 80) { confidence = "Muito Alto"; suggestion = "Pré-Jogo ou Live > 10'"; }
-            else if(fakeOverHT >= 70) { confidence = "Alto"; suggestion = "Live > 15'"; }
+            // Simula histórico recente de HT (Form)
+            const formTypes = ['✅✅✅✅✅', '✅✅❌✅✅', '❌✅✅✅✅', '✅✅✅❌✅', '✅❌✅✅✅'];
+            const form = formTypes[Math.floor(Math.random() * formTypes.length)];
+
+            let confidence = "Média";
+            let suggestion = "Aguardar Pressão";
+            let heat = "cold";
+            
+            if(fakeOverHT >= 80 && xG >= 1.5) { 
+                confidence = "Máxima"; 
+                suggestion = "ENTRAR AGORA"; 
+                heat = "hot";
+            }
+            else if(fakeOverHT >= 70) { 
+                confidence = "Alta"; 
+                suggestion = "Observar Live"; 
+                heat = "warm";
+            }
 
             opportunities.push({
                 liga: match.league.name,
@@ -84,9 +102,13 @@ export async function GET(request) {
                 isLive: isLive,
                 score: score,
                 status: isLive && elapsed ? `${elapsed}'` : 'NS',
-                hist: `${fakeOverHT}%`,
+                hist: fakeOverHT,
+                xg: xG,
+                odd: liveOdd,
+                form: form,
                 conf: confidence,
-                sug: suggestion
+                sug: suggestion,
+                heat: heat
             });
 
             // Limite de 15 jogos mais relevantes do dia

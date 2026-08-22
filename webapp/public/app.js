@@ -468,12 +468,27 @@ async function loadRadarData() {
                         </div>
                     </td>
                     <td>
-                        <div class="radar-stat">
-                            <span style="color: var(--win-color); font-weight: 700;">${d.hist}</span>
+                        <div class="radar-stat-box">
+                            <div class="stat-ring ${d.hist >= 80 ? 'ring-green' : 'ring-orange'}" style="--p: ${d.hist}">
+                                <span>${d.hist}%</span>
+                            </div>
+                            <div class="stat-details">
+                                <span class="xg-badge">🔥 xG: ${d.xg}</span>
+                                <span class="form-tracker">${d.form}</span>
+                            </div>
                         </div>
                     </td>
-                    <td><span class="result-badge ${d.conf === 'Muito Alto' ? 'green' : 'blue'}">${d.conf}</span></td>
-                    <td><span class="radar-sug ${d.sug.includes('Live') ? 'sug-live' : 'sug-pre'}">${d.sug}</span></td>
+                    <td>
+                        <div class="market-box">
+                            <button class="odd-btn">@${d.odd}</button>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-box">
+                            <span class="action-badge ${d.heat}">${d.conf}</span>
+                            <span class="action-sug ${d.sug.includes('ENTRAR') ? 'sug-now' : ''}">${d.sug}</span>
+                        </div>
+                    </td>
                 </tr>
             `).join('');
         } else {
