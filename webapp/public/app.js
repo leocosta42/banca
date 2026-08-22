@@ -448,7 +448,7 @@ async function loadRadarData() {
                 <tr class="${d.isLive ? 'live-row' : ''}">
                     <td>
                         <div class="radar-league">
-                            <img src="${d.ligaLogo}" onerror="this.style.display='none'">
+                            <img src="${d.ligaLogo}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
                             <span>${d.liga}</span>
                         </div>
                     </td>
@@ -456,13 +456,13 @@ async function loadRadarData() {
                         <div class="radar-match">
                             <div class="radar-team">
                                 <span>${d.home}</span>
-                                <img src="${d.homeLogo}" onerror="this.style.display='none'">
+                                <img src="${d.homeLogo}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
                             </div>
                             <div class="radar-score ${d.isLive ? 'live' : ''}">
                                 ${d.isLive ? `<span>${d.score}</span><small class="live-blink">${d.status}</small>` : `<span>${d.time}</span>`}
                             </div>
                             <div class="radar-team radar-away">
-                                <img src="${d.awayLogo}" onerror="this.style.display='none'">
+                                <img src="${d.awayLogo}" referrerpolicy="no-referrer" onerror="this.style.display='none'">
                                 <span>${d.away}</span>
                             </div>
                         </div>
